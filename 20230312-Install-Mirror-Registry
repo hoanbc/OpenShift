@@ -28,3 +28,34 @@ ARCHITECTURE="x86_64"
 --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE}-${ARCHITECTURE} \
 --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
 --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}-${ARCHITECTURE}
+
+Success
+Update image:  quay.testvn.click:8443/ocp4/openshift4:4.12.5-x86_64
+Mirror prefix: quay.testvn.click:8443/ocp4/openshift4
+Mirror prefix: quay.testvn.click:8443/ocp4/openshift4:4.12.5-x86_64
+
+To use the new mirrored repository to install, add the following section to the install-config.yaml:
+
+imageContentSources:
+- mirrors:
+  - quay.testvn.click:8443/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - quay.testvn.click:8443/ocp4/openshift4
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+
+
+To use the new mirrored repository for upgrades, use the following to create an ImageContentSourcePolicy:
+
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: example
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - quay.testvn.click:8443/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-release
+  - mirrors:
+    - quay.testvn.click:8443/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
