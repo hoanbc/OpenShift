@@ -1,0 +1,30 @@
+###Download some package requirement
+https://console.redhat.com/openshift/downloads -> Download ->
+Tokens: Pull secret
+OpenShift disconnected installation tools: mirror registry for Red Hat OpenShift
+Command-line interface (CLI) tools: OpenShift command-line interface (oc)
+
+
+##Install mirror registry on rhel8 or rhel9
+dnf install podman -y
+systemctl enable --now podnam
+
+mkdir /mirror
+unzip  mirror-registry.tar.gz 
+unzip openshift-client-linux.tar.gz
+./mirror-registry install --quayHostname quay.testvn.click --quayRoot /mirror/ --sslCert testvn-crt.pem --sslKey testvn-key.pem 
+
+##Create mirror with quay.io
+OCP_RELEASE="4.12.5"
+LOCAL_REGISTRY="quay.testvn.click:8443"
+LOCAL_REPOSITORY="ocp4/openshift4"
+PRODUCT_REPO="openshift-release-dev"
+LOCAL_SECRET_JSON="./pull-secret.json"
+RELEASE_NAME="ocp-release"
+ARCHITECTURE="x86_64"
+
+
+./oc adm release mirror -a ${LOCAL_SECRET_JSON}  \
+--from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE}-${ARCHITECTURE} \
+--to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
+--to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}-${ARCHITECTURE}
