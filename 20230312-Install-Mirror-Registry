@@ -10,8 +10,8 @@ dnf install podman -y
 systemctl enable --now podnam
 
 mkdir /mirror
-unzip  mirror-registry.tar.gz 
-unzip openshift-client-linux.tar.gz
+tar -xzvf  mirror-registry.tar.gz 
+tar -xzvf openshift-client-linux.tar.gz
 ./mirror-registry install --quayHostname quay.testvn.click --quayRoot /mirror/ --sslCert testvn-crt.pem --sslKey testvn-key.pem 
 
 ##Create mirror with quay.io
