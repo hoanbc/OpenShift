@@ -1,0 +1,7 @@
+Example: https://cloud.redhat.com/blog/requesting-and-installing-lets-encrypt-certificates-for-openshift-4
+
+oc create secret tls router-certs --cert=${CERTDIR}/fullchain.pem --key=${CERTDIR}/key.pem -n openshift-ingress
+oc patch ingresscontroller default -n openshift-ingress-operator --type=merge --patch='{"spec": { "defaultCertificate": { "name": "router-certs" }}}'
+
+oc create secret tls api-certs --cert=${CERTDIR}/fullchain.pem --key=${CERTDIR}/key.pem -n openshift-config
+oc patch apiserver cluster --type merge --patch="{\"spec\": {\"servingCerts\": {\"namedCertificates\": [ { \"names\": [  \"api.openshift.testvn.click\"  ], \"servingCertificate\": {\"name\": \"api-certs\" }}]}}}"
