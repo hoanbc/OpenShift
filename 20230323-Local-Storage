@@ -12,7 +12,9 @@ Click OK and click Save.
 Power on the virtual machine.
 
 ###Install
-OCP Console -> Operators -> OperatorHub -> Local Storage -> Install
+oc adm new-project openshift-local-storage
+oc annotate project openshift-local-storage openshift.io/node-selector=''
+OCP Console -> Operators -> OperatorHub -> Local Storage -> Update channel: stable / Select a Namespace: openshift-local-storage / Update approval: Automatic Install
 
 ###Setting
 OCP Console -> Operators -> Installed Operators -> Local Storage -> Create Local Volume -> 
