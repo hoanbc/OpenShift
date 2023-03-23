@@ -1,0 +1,45 @@
+###Enable UUID
+Start the vSphere Client, and log in to a vCenter Server.
+Select Virtual Machines and Templates and click the Virtual Machines tab.
+Right-click the virtual machine for which you are enabling the disk UUID attribute, and select Power > Power Off. (The virtual machine powers off.)
+Right-click the virtual machine, and click Edit Settings.
+Click the Options tab, and select the General entry in the settings column.
+Click Configuration Parameters. The Configuration Parameters window appears.
+Click Add Row.
+In the Name column, enter disk.EnableUUID.
+In the Value column, enter TRUE.
+Click OK and click Save.
+Power on the virtual machine.
+
+###Install
+OCP Console -> Operators -> OperatorHub -> Local Storage -> Install
+
+###Setting
+OCP Console -> Operators -> Installed Operators -> Local Storage -> Create Local Volume -> 
+
+---
+apiVersion: "local.storage.openshift.io/v1"
+kind: "LocalVolume"
+metadata:
+  name: "local-disks-filesystem"
+  namespace: "openshift-local-storage" 
+spec:
+  storageClassDevices:
+    - storageClassName: "local-disks-filesystem" 
+      volumeMode: Filesystem 
+      fsType: xfs 
+      devicePaths: 
+        - /dev/disk/by-id/wwn-0x6000c29979a049d9f1532d0a5c4f0173
+
+---
+apiVersion: "local.storage.openshift.io/v1"
+kind: "LocalVolume"
+metadata:
+  name: "local-disks-block"
+  namespace: "openshift-local-storage" 
+spec:
+  storageClassDevices:
+    - storageClassName: "local-disks-block" 
+      volumeMode: Block  
+      devicePaths: 
+        - /dev/disk/by-id/wwn-0x6000c297550a9f4d17357f924bf37218
