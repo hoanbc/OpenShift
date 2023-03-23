@@ -45,3 +45,7 @@ spec:
       volumeMode: Block  
       devicePaths: 
         - /dev/disk/by-id/wwn-0x6000c297550a9f4d17357f924bf37218
+
+Link: 
+https://docs.openshift.com/container-platform/4.12/storage/persistent_storage/persistent-storage-local.html
+https://www.suse.com/support/kb/doc/?id=000016951
