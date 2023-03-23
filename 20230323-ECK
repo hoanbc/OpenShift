@@ -1,0 +1,122 @@
+###Install
+OCP Console -> Operators -> OperatorHub -> Elasticsearch (ECK) Operator -> Update channel: stable / Select a Namespace: testvn-eck / Update approval: Automatic -> Install
+
+###Elasticsearch
+OCP Console -> Operators -> Installed Operators -> Elasticsearch Cluster -> Create Elasticsearch -> Input-> Create
+---
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+  namespace: testvn-eck
+spec:
+  version: 8.6.0
+  nodeSets:
+  - name: default
+    count: 1
+    podTemplate:
+      spec:
+        containers:
+          - name: elasticsearch
+            env:
+              - name: ES_JAVA_OPTS
+                value: -Xms4g -Xmx4g
+            resources:
+              requests:
+                memory: 8Gi
+                cpu: 1
+              limits:
+                memory: 8Gi
+    volumeClaimTemplates:
+      - metadata:
+          name: elasticsearch-data
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+          storageClassName: local-disks-filesystem
+    config:
+      node.roles: [ "master", "data", "remote_cluster_client" ]
+      node.store.allow_mmap: false
+
+###Kibana
+OCP Console -> Operators -> Installed Operators -> Elasticsearch Cluster -> Create Kibana -> Input-> Create
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: testvn-eck
+spec:
+  version: 8.6.0
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+  podTemplate:
+    metadata:
+      labels:
+        function: kibana
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 0.5
+            limits:
+              memory: 2Gi
+              cpu: 2
+  http:
+    service:
+      metadata:
+        annotations:
+          service.beta.openshift.io/serving-cert-secret-name: "kibana-openshift-tls"
+    tls:
+      certificate:
+        secretName: kibana-openshift-tls
+###APM
+OCP Console -> Operators -> Installed Operators -> Elasticsearch Cluster -> Create APM Server -> Input-> Create
+---
+kind: ApmServer
+apiVersion: apm.k8s.elastic.co/v1
+metadata:
+  name: apmserver
+  namespace: testvn-eck
+spec:
+  version: 8.6.0
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+
+
+
+###Route Kibana
+OCP Console -> Networking -> Routes -> Create Route
+---
+Name: kibana
+Hostname: kibana.apps.openshift.testvn.click
+Path: /
+Service: kibana-kb-http
+Target port: 5601
+Security: Secure Route
+TLS termination: Re-encrypt
+Insecure traffic: Redirect
+Certificates:///
+
+###Route APM
+OCP Console -> Networking -> Routes -> Create Route
+---
+Name: apm
+Hostname: apm.apps.openshift.testvn.click
+Path: /
+Service: apm-server-apm-http
+Target port: 5601
+Security: Secure Route
+TLS termination: passthrough 
+Insecure traffic: Redirect
+Certificates:///
+
+
+Link: https://cloud.redhat.com/blog/run-elastic-cloud-on-kubernetes-on-red-hat-openshift
