@@ -1,45 +1,66 @@
-firewall-cmd --permanent --add-port=80/tcp
+#Open firewall
 firewall-cmd --permanent --add-port=443/tcp
-firewall-cmd --permanent --add-port=5432/tcp
-firewall-cmd --permanent --add-port=5433/tcp
-firewall-cmd --permanent --add-port=6379/tcp
 firewall-cmd --reload
 
-sudo podman run --rm -it --name test -p 80:80 registry.redhat.io/rhel8/nginx-114
+#Fix host
+192.168.1.195 quay.testvn.click
 
+#Install Podman
+dnf install podman -y
+
+#Create folder
 export QUAY=/data/
 mkdir -p $QUAY/postgres-quay
 setfacl -m u:26:-wx $QUAY/postgres-quay
+mkdir -p $QUAY/storage
+setfacl -m u:1001:-wx $QUAY/storage
+mkdir $QUAY/config-quay
+mkdir $QUAY/config-clairv4
+chmod 744 -R $QUAY/config-clairv4
 
-#Postgres
+#Deploy Postgres for quay
 sudo podman run -dit --rm --name postgresql-quay \
 -e POSTGRESQL_USER=quayuser \
--e POSTGRESQL_PASSWORD=Lotte@202#quaypass \
+-e POSTGRESQL_PASSWORD=quaypass \
 -e POSTGRESQL_DATABASE=quay \
--e POSTGRESQL_ADMIN_PASSWORD=Lotte@202#adminpass \
+-e POSTGRESQL_ADMIN_PASSWORD=adminpass \
 -p 5432:5432 \
 -v $QUAY/postgres-quay:/var/lib/pgsql/data:Z \
 registry.redhat.io/rhel8/postgresql-13:1-109
 
 sudo podman exec -it postgresql-quay /bin/bash -c 'echo "CREATE EXTENSION IF NOT EXISTS pg_trgm" | psql -d quay -U postgres'
 
-#Redis
+#Deploy Redis
 sudo podman run -d --rm --name redis \
 -p 6379:6379 \
--e REDIS_PASSWORD=Lotte@202#strongpassword \
+-e REDIS_PASSWORD=strongpassword \
 registry.redhat.io/rhel8/redis-6:1-110
 
-#Quay-config
+#Deploy Quay-config
 sudo podman run --rm -it --name quay_config -p 80:8080 -p 443:8443 registry.redhat.io/quay/quay-rhel8:v3.8.4 config secret
 
+-> Access http://quay.testvn.click -> Account: quayconfig / Password: secret -> Input
+Basic configuration
+Server configuration
+Database
+  Database Type: Postgres
+  Database Server: quay.testvn.click:5432
+  Username: quayuser
+  Password: quaypass
+  Database Name: quay
+Redis
+  Redis Hostname: quay.testvn.click
+  Redis port: 6379 (default)
+  Redis password: strongpassword
+  
+  
+  
 mkdir $QUAY/config
 cp ~/Downloads/quay-config.tar.gz ~/config
 cd $QUAY/config
 tar xvf quay-config.tar.gz
 
-#Quay storage
-mkdir $QUAY/storage
-setfacl -m u:1001:-wx $QUAY/storage
+
 
 sudo podman run -dit --rm -p 80:8080 -p 443:8443  \
 --name=quay \
@@ -112,7 +133,7 @@ sudo podman run -dit --name clairv4 \
 -e CLAIR_MODE=combo \
 -e HTTP_PROXY=10.252.36.4:3128 \
 -e HTTPS_PROXY=10.252.36.4:3128 \
--e NO_PROXY=localhost,quay-dev.lottefn.vn,10.252.0.0/16,10.88.0.0/16 \
+-e NO_PROXY=localhost,quay-dev.testvn.click,10.252.0.0/16,10.88.0.0/16 \
 -e HTTPS_PROXY=10.252.36.4:3128 \
 -v /data/config-clairv4/:/clair:Z \
 registry.redhat.io/quay/clair-rhel8:v3.8.4
