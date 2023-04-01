@@ -155,5 +155,11 @@ firewall-cmd --add-port=8080/tcp --permanent
 firewall-cmd --reload
 
 mkdir /data/rhcos_image_cache
+sudo semanage fcontext -a -t httpd_sys_content_t "/data/rhcos_image_cache(/.*)?"
+sudo restorecon -Rv /data/rhcos_image_cache/
+
+cd /data/rhcos_image_cache
 wget https://rhcos.mirror.openshift.com/art/storage/prod/streams/4.12/builds/412.86.202301311551-0/x86_64/rhcos-412.86.202301311551-0-vmware.x86_64.ova
+
 podman run -dit --name rhcos_image_cache -v /data/rhcos_image_cache:/var/www/html -p 8080:8080/tcp quay.io/centos7/httpd-24-centos7:latest
+
