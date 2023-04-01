@@ -149,3 +149,11 @@ sudo podman run -dit --name clairv4 \
 -v /data/config-quay/ssl.cert:/etc/certs/quay.testvn.click:Z \
 -v /data/config-clairv4/:/clair:Z \
 registry.redhat.io/quay/clair-rhel8:v3.8.4
+
+#Option for image cache
+firewall-cmd --add-port=8080/tcp --permanent
+firewall-cmd --reload
+
+mkdir /data/rhcos_image_cache
+wget https://rhcos.mirror.openshift.com/art/storage/prod/streams/4.12/builds/412.86.202301311551-0/x86_64/rhcos-412.86.202301311551-0-vmware.x86_64.ova
+podman run -dit --name rhcos_image_cache -v /data/rhcos_image_cache:/var/www/html -p 8080:8080/tcp quay.io/centos7/httpd-24-centos7:latest
