@@ -419,3 +419,92 @@ INFO To access the cluster as the system:admin user when using 'oc', run 'export
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.ocp.testvn.click
 INFO Login to the console with user: "kubeadmin", and password: "pfkct-aGWub-agokR-ekhXe"
 INFO Time elapsed: 58m12s
+
+
+###NTP
+chronybase64=$(cat << EOF | base64 -w 0
+server 10.200.9.195 iburst
+driftfile /var/lib/chrony/drift
+makestep 1.0 3
+rtcsync
+keyfile /etc/chrony.keys
+leapsectz right/Asia/Ho_Chi_Minh
+logdir /var/log/chrony
+EOF
+)
+
+oc apply -f - << EOF
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 50-worker-chrony
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,${chronybase64}
+        filesystem: root
+        mode: 0644
+        path: /etc/chrony.conf
+    systemd:
+      units:
+      - contents: |
+          [Unit]
+          Description=set timezone
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=timedatectl set-timezone Asia/Ho_Chi_Minh
+
+          [Install]
+          WantedBy=multi-user.target
+        enabled: true
+        name: custom-timezone.service
+EOF
+
+
+
+oc apply -f - << EOF
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 50-master-chrony
+spec:
+  config:
+    ignition:
+      version: 2.2.0
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,${chronybase64}
+        filesystem: root
+        mode: 0644
+        path: /etc/chrony.conf
+    systemd:
+      units:
+      - contents: |
+          [Unit]
+          Description=set timezone
+          After=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=timedatectl set-timezone Asia/Ho_Chi_Minh
+
+          [Install]
+          WantedBy=multi-user.target
+        enabled: true
+        name: custom-timezone.service
+EOF
+
+
+
+
