@@ -10,3 +10,6 @@ metadata:
 spec:
   httpHeaders:
     forwardedHeaderPolicy: Append
+
+##
+You can set the haproxy.router.openshift.io/set-forwarded-headers annotation on a per route basis, independent from the globally set value for the Ingress Controller.
