@@ -1,0 +1,158 @@
+[root@lab-quay]# oc get pods -n openshift-etcd | grep -v etcd-quorum-guard | grep etcd
+etcd-guard-ocp-f944j-master-0          1/1     Running     1          29h
+etcd-guard-ocp-f944j-master-1          1/1     Running     0          29h
+etcd-guard-ocp-f944j-master-2          1/1     Running     0          30h
+etcd-ocp-f944j-master-0                4/4     Running     13         43h
+etcd-ocp-f944j-master-1                4/4     Running     8          43h
+etcd-ocp-f944j-master-2                4/4     Running     8          43h
+
+[root@lab-quay]# oc get etcd -o=jsonpath='{range .items[0].status.conditions[?(@.type=="EtcdMembersAvailable")]}{.message}{"\n"}'
+3 members are available
+
+[root@lab-quay]# oc get machines -A -ojsonpath='{range .items[*]}{@.status.nodeRef.name}{"\t"}{@.status.providerStatus.instanceState}{"\n"}' | grep -v running
+ocp-f944j-infra-kxr47   poweredOn
+ocp-f944j-infra-pjnwc   poweredOn
+ocp-f944j-master-0      Unknown
+ocp-f944j-master-1      poweredOn
+ocp-f944j-master-2      poweredOn
+ocp-f944j-worker-wdmz2  poweredOn
+ocp-f944j-worker-wfw9d  poweredOn
+ocp-f944j-worker-wgqkl  poweredOn
+
+[root@lab-quay]# oc get nodes -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{"\t"}{range .spec.taints[*]}{.key}{" "}' | grep unreachable
+[root@lab-quay]# oc get nodes -l node-role.kubernetes.io/master | grep "NotReady"
+
+[root@lab-quay]# oc rsh -n openshift-etcd  etcd-ocp-f944j-master-1
+sh-4.4# etcdctl member list -w table
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+|        ID        | STATUS  |        NAME        |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+| 4ede365c013070b7 | started | ocp-f944j-master-1 |  https://10.200.12.69:2380 |  https://10.200.12.69:2379 |      false |
+| 9199a6ff9fc4b537 | started | ocp-f944j-master-0 |  https://10.200.12.65:2380 |  https://10.200.12.65:2379 |      false |
+| c6f68dd0ba9b3c9f | started | ocp-f944j-master-2 | https://10.200.12.160:2380 | https://10.200.12.160:2379 |      false |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+
+sh-4.4# etcdctl member remove 9199a6ff9fc4b537
+Member 9199a6ff9fc4b537 removed from cluster e5fd90c084023fd4
+sh-4.4# etcdctl member list -w table
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+|        ID        | STATUS  |        NAME        |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+| 4ede365c013070b7 | started | ocp-f944j-master-1 |  https://10.200.12.69:2380 |  https://10.200.12.69:2379 |      false |
+| c6f68dd0ba9b3c9f | started | ocp-f944j-master-2 | https://10.200.12.160:2380 | https://10.200.12.160:2379 |      false |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+
+[root@lab-quay]# oc patch etcd/cluster --type=merge -p '{"spec": {"unsupportedConfigOverrides": {"useUnsupportedUnsafeNonHANonProductionUnstableEtcd": true}}}'
+etcd.operator.openshift.io/cluster patched
+
+[root@lab-quay]# oc get secrets -n openshift-etcd | grep ocp-f944j-master-0
+etcd-peer-ocp-f944j-master-0              kubernetes.io/tls                     2      44h
+etcd-serving-metrics-ocp-f944j-master-0   kubernetes.io/tls                     2      44h
+etcd-serving-ocp-f944j-master-0           kubernetes.io/tls                     2      44h
+
+[root@lab-quay]# oc delete secret -n openshift-etcd etcd-peer-ocp-f944j-master-0
+secret "etcd-peer-ocp-f944j-master-0" deleted
+
+[root@lab-quay]# oc delete secret -n openshift-etcd etcd-serving-metrics-ocp-f944j-master-0
+secret "etcd-serving-metrics-ocp-f944j-master-0" deleted
+
+[root@lab-quay]# oc delete secret -n openshift-etcd etcd-serving-ocp-f944j-master-0
+secret "etcd-serving-ocp-f944j-master-0" deleted
+
+[root@lab-quay]# oc delete machine -n openshift-machine-api ocp-f944j-master-0
+
+[root@lab-quay]# oc get machines -n openshift-machine-api -o wide
+NAME                     PHASE      TYPE   REGION   ZONE   AGE   NODE                     PROVIDERID                                       STATE
+ocp-f944j-infra-kxr47    Running                           42m   ocp-f944j-infra-kxr47    vsphere://42086488-1f31-5b56-8442-9d1d5e6c9e69   poweredOn
+ocp-f944j-infra-pjnwc    Running                           42m   ocp-f944j-infra-pjnwc    vsphere://420833ab-3c03-0cab-1c12-07e9f65e33ec   poweredOn
+ocp-f944j-master-0       Deleting                          44h   ocp-f944j-master-0       vsphere://4208fc89-0681-ba4a-5620-9b8817845358   Unknown
+ocp-f944j-master-1       Running                           44h   ocp-f944j-master-1       vsphere://420878bd-5d4b-015d-969b-726871737832   poweredOn
+ocp-f944j-master-2       Running                           44h   ocp-f944j-master-2       vsphere://42089f17-f23b-3fd2-7961-0effa7acecdc   poweredOn
+
+[root@lab-quay ~]# oc get machine ocp-f944j-master-0  -n openshift-machine-api -o yaml > new-master-machine.yaml
+
+[root@lab-quay ~]# cat new-master-machine.yaml
+apiVersion: machine.openshift.io/v1beta1
+kind: Machine
+metadata:
+  annotations:
+  finalizers:
+  - machine.machine.openshift.io
+  generation: 5
+  labels:
+    machine.openshift.io/cluster-api-cluster: ocp-f944j
+    machine.openshift.io/cluster-api-machine-role: master
+    machine.openshift.io/cluster-api-machine-type: master
+    machine.openshift.io/region: ""
+    machine.openshift.io/zone: ""
+  name: ocp-f944j-master-0
+  namespace: openshift-machine-api
+spec:
+  lifecycleHooks: {}
+  metadata: {}
+  providerSpec:
+    value:
+      apiVersion: machine.openshift.io/v1beta1
+      credentialsSecret:
+        name: vsphere-cloud-credentials
+      diskGiB: 120
+      kind: VSphereMachineProviderSpec
+      memoryMiB: 16384
+      metadata:
+        creationTimestamp: null
+      network:
+        devices:
+        - networkName: vxw-dvs-83-virtualwire-9-sid-5008-TEST-Network
+      numCPUs: 4
+      numCoresPerSocket: 2
+      snapshot: ""
+      template: ocp-f944j-rhcos
+      userDataSecret:
+        name: master-user-data
+      workspace:
+        datacenter: TESTVN
+        datastore: Storage_VM
+        folder: /TESTVN/vm/Testing/TEST_K8S_CLUSTER
+        resourcePool: /TESTVN/host/Cluster/Resources
+        server: 10.200.0.20
+status:
+
+[root@lab-quay ~]#  oc apply -f new-master-machine.yaml
+machine.machine.openshift.io/ocp-f944j-master-0 created
+
+[root@lab-quay ~]# oc get machines -n openshift-machine-api -o wide
+NAME                     PHASE          TYPE   REGION   ZONE   AGE     NODE                     PROVIDERID                                       STATE
+ocp-f944j-master-0       Provisioning                          9m13s
+ocp-f944j-master-1       Running                               44h     ocp-f944j-master-1       vsphere://420878bd-5d4b-015d-969b-726871737832   poweredOn
+ocp-f944j-master-2       Running                               44h     ocp-f944j-master-2       vsphere://42089f17-f23b-3fd2-7961-0effa7acecdc   poweredOn
+
+[root@lab-quay ~]# oc get machines -n openshift-machine-api -o wide
+NAME                     PHASE     TYPE   REGION   ZONE   AGE   NODE                     PROVIDERID                                       STATE
+ocp-f944j-master-0       Running                          18m   ocp-f944j-master-0       vsphere://420866dd-6531-b101-11fd-98552931ae6c   poweredOn
+ocp-f944j-master-1       Running                          44h   ocp-f944j-master-1       vsphere://420878bd-5d4b-015d-969b-726871737832   poweredOn
+ocp-f944j-master-2       Running                          44h   ocp-f944j-master-2       vsphere://42089f17-f23b-3fd2-7961-0effa7acecdc   poweredOn
+
+[root@lab-quay ~]#  oc rsh -n openshift-etcd  etcd-ocp-f944j-master-1
+
+sh-4.4#  etcdctl member list -w table
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+|        ID        | STATUS  |        NAME        |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+| 4ede365c013070b7 | started | ocp-f944j-master-1 |  https://10.200.12.69:2380 |  https://10.200.12.69:2379 |      false |
+| c6f68dd0ba9b3c9f | started | ocp-f944j-master-2 | https://10.200.12.160:2380 | https://10.200.12.160:2379 |      false |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+sh-4.4#  etcdctl member list -w table
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+|        ID        | STATUS  |        NAME        |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+| 3eceb7f1c0a72e04 | started | ocp-f944j-master-0 | https://10.200.12.175:2380 | https://10.200.12.175:2379 |      false |
+| 4ede365c013070b7 | started | ocp-f944j-master-1 |  https://10.200.12.69:2380 |  https://10.200.12.69:2379 |      false |
+| c6f68dd0ba9b3c9f | started | ocp-f944j-master-2 | https://10.200.12.160:2380 | https://10.200.12.160:2379 |      false |
++------------------+---------+--------------------+----------------------------+----------------------------+------------+
+sh-4.4# exit
+
+[root@lab-quay ~]# oc -n openshift-etcd get pods -l k8s-app=etcd
+NAME                      READY   STATUS    RESTARTS      AGE
+etcd-ocp-f944j-master-0   4/4     Running   0             76s
+etcd-ocp-f944j-master-1   4/4     Running   1 (16m ago)   19m
+etcd-ocp-f944j-master-2   4/4     Running   0             13m
