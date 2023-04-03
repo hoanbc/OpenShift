@@ -1,0 +1,12 @@
+Using X-Forwarded headers
+
+
+$ oc edit IngressController
+apiVersion: operator.openshift.io/v1
+kind: IngressController
+metadata:
+  name: default
+  namespace: openshift-ingress-operator
+spec:
+  httpHeaders:
+    forwardedHeaderPolicy: Append
