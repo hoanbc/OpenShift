@@ -1,0 +1,15 @@
+apiVersion: operator.openshift.io/v1
+kind: IngressController
+metadata:
+  name: default
+  namespace: openshift-ingress-operator
+spec:
+  replicas: 2
+  logging:
+    access:
+      destination:
+        type: Syslog
+        syslog:
+          address: 1.2.3.4
+          port: 10514
+      httpLogFormat: '%ci:%cp [%t] %ft %b/%s %B %bq %HM %HU %HV'
