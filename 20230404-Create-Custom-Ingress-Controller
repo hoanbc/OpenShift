@@ -7,7 +7,9 @@ metadata:
   name: dev
   namespace: openshift-ingress-operator
 spec:
-  domain: dev.ocp.testvn.click
+  domain: demo.testvn.click
+  endpointPublishingStrategy:
+    type: HostNetwork
   nodePlacement:
     nodeSelector:
       matchLabels:
@@ -19,12 +21,12 @@ spec:
       value: infra
   routeSelector:
     matchLabels:
-      my/env: dev
+      my/env: demo
   routeAdmission:
     namespaceOwnership: InterNamespaceAllowed
 defaultCertificate:
     name: custom-ingress-custom-certs
-domain: "dev.testvn.click"
+domain: "demo.testvn.click"
 nodePlacement:
   nodeSelector:
     matchLabels:
@@ -40,3 +42,20 @@ router-dev-8456f49f48-mcwr9       1/1     Running   0          6s    10.200.12.1
 router-dev-8456f49f48-prx2v       1/1     Running   0          6s    10.200.12.125   ocp-f944j-infra-kxr47    <none>           <none>
 
 Link: https://access.redhat.com/solutions/6017531
+
+
+
+###
+	// LoadBalancerService publishes the ingress controller using a Kubernetes
+	// LoadBalancer Service.
+	LoadBalancerServiceStrategyType EndpointPublishingStrategyType = "LoadBalancerService"
+
+	// HostNetwork publishes the ingress controller on node ports where the
+	// ingress controller is deployed.
+	HostNetworkStrategyType EndpointPublishingStrategyType = "HostNetwork"
+
+	// Private does not publish the ingress controller.
+	PrivateStrategyType EndpointPublishingStrategyType = "Private"
+
+	// NodePortService publishes the ingress controller using a Kubernetes NodePort Service.
+	NodePortServiceStrategyType EndpointPublishingStrategyType = "NodePortService"
