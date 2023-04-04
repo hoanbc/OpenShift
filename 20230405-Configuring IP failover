@@ -1,0 +1,75 @@
+1) Create an IP failover service account:
+$ oc create sa ipfailover
+
+2) Update security context constraints (SCC) for hostNetwork:
+$ oc adm policy add-scc-to-user privileged -z ipfailover
+$ oc adm policy add-scc-to-user hostnetwork -z ipfailover
+
+3) Create a deployment YAML file to configure IP failover:
+vim ipfailover.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ipfailover-keepalived 
+  labels:
+    ipfailover: hello-openshift
+spec:
+  strategy:
+    type: Recreate
+  replicas: 2
+  selector:
+    matchLabels:
+      ipfailover: hello-openshift
+  template:
+    metadata:
+      labels:
+        ipfailover: hello-openshift
+    spec:
+      serviceAccountName: ipfailover
+      privileged: true
+      hostNetwork: true
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+      tolerations:
+      - effect: NoSchedule
+        operator: Equal
+        key: node-function
+        value: infra
+      containers:
+      - name: openshift-ipfailover
+        image: quay.io/openshift/origin-keepalived-ipfailover
+        ports:
+        - containerPort: 63000
+          hostPort: 63000
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        env:
+        - name: OPENSHIFT_HA_CONFIG_NAME
+          value: "ipfailover"
+        - name: OPENSHIFT_HA_VIRTUAL_IPS 
+          value: "10.200.12.225"
+        - name: OPENSHIFT_HA_VIP_GROUPS 
+          value: "11"
+        - name: OPENSHIFT_HA_MONITOR_PORT 
+          value: "80"
+        - name: OPENSHIFT_HA_VRRP_ID_OFFSET 
+          value: "2"
+        - name: OPENSHIFT_HA_REPLICA_COUNT 
+          value: "2" #Must match the number of replicas in the deployment
+        - name: OPENSHIFT_HA_USE_UNICAST
+          value: "false"
+        - name: OPENSHIFT_HA_IPTABLES_CHAIN 
+          value: "INPUT"
+        - name: OPENSHIFT_HA_PREEMPTION 
+          value: "preempt_delay 300"
+        - name: OPENSHIFT_HA_CHECK_INTERVAL 
+          value: "2"
+        livenessProbe:
+          initialDelaySeconds: 10
+          exec:
+            command:
+            - pgrep
+            - keepalived
+      imagePullSecrets:
+        - name: openshift-pull-secret 
