@@ -14,6 +14,7 @@ spec:
         node-role.kubernetes.io/infra: ""
     tolerations:
     - effect: NoSchedule
+      operator: Equal
       key: node-function
       value: infra
   routeSelector:
