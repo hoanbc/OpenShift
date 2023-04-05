@@ -11,7 +11,9 @@ metadata:
 spec:
   domain: demo.testvn.click
   endpointPublishingStrategy:
-    type: HostNetwork
+    #type: HostNetwork
+    #type: NodePortService
+    type: LoadBalancerService
   nodePlacement:
     nodeSelector:
       matchLabels:
@@ -46,6 +48,10 @@ router-default-67ccd5bb4d-24k68   1/1     Running   0          32h   10.200.12.1
 router-default-67ccd5bb4d-2kp77   1/1     Running   0          32h   10.200.12.59    ocp-f944j-worker-wfw9d   <none>           <none>
 router-dev-8456f49f48-mcwr9       1/1     Running   0          6s    10.200.12.181   ocp-f944j-infra-pjnwc    <none>           <none>
 router-dev-8456f49f48-prx2v       1/1     Running   0          6s    10.200.12.125   ocp-f944j-infra-kxr47    <none>           <none>
+
+5) Option if use metallb
+oc annotate svc/router-dev metallb.universe.tf/loadBalancerIPs='10.200.12.228' -n openshift-ingress
+oc annotate svc/router-dev metallb.universe.tf/address-pool='prod-ip-pools' -n openshift-ingress
 
 Link: https://access.redhat.com/solutions/6017531
 
