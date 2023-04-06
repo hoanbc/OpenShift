@@ -1,0 +1,31 @@
+#Create egress rule
+vim egress.yaml
+apiVersion: k8s.ovn.org/v1
+kind: EgressIP
+metadata:
+  name: egress-group1
+spec:
+  egressIPs:
+  - 10.200.12.233
+  #podSelector:
+    #matchLabels:
+      #app: web
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: egress-test
+
+#Add lable allow node forward egress traffic
+oc label nodes ocp-f944j-infra-6xfxb k8s.ovn.org/egress-assignable=""
+oc label nodes ocp-f944j-infra-wwd62 k8s.ovn.org/egress-assignable=""
+      
+#Check
+[root@lab-quay ~]# oc get egressip
+NAME            EGRESSIPS       ASSIGNED NODE           ASSIGNED EGRESSIPS
+egress-group1   10.200.12.233   ocp-f944j-infra-6xfxb   10.200.12.233
+egress-group2   10.200.12.234   ocp-f944j-infra-wwd62   10.200.12.234
+egress-group3   10.200.12.235   ocp-f944j-infra-wwd62   10.200.12.235
+
+#Note
+An egress IP address is never assigned to more than one node at a time.
+An egress IP address is equally balanced between available nodes that can host the egress IP address.
+If the spec.EgressIPs array in an EgressIP object specifies more than one IP address, no node will ever host more than one of the specified addresses.
