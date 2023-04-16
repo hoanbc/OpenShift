@@ -1,0 +1,8 @@
+[root@lab-quay ~]# oc project testvn-wordpress
+Now using project "testvn-wordpress" on server "https://api.ocp.testvn.click:6443".
+
+[root@lab-quay ~]# oc get pod wordpress-569998746c-kcq4p -o yaml |  grep -wi serviceaccountname
+  serviceAccountName: default
+  
+[root@lab-quay ~]# oc adm policy add-scc-to-user anyuid -z default
+clusterrole.rbac.authorization.k8s.io/system:openshift:scc:anyuid added: "default"
