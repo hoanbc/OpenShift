@@ -60,3 +60,10 @@ spec:
   - mirrors:
     - quay.testvn.click:8443/ocp4/openshift4
     source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+    
+    
+###Mirror docker
+Enabled: Yes
+External Repository: docker.io/library/alpine 
+Tags: latest 
+
