@@ -1,0 +1,42 @@
+apiVersion: network.operator.openshift.io/v1
+kind: EgressRouter
+metadata:
+  name: egress-router-redirect
+  namespace: testvn-egress
+spec:
+  networkInterface: {
+    macvlan: {
+      mode: "Bridge"
+    }
+  }
+  addresses: [
+    {
+      ip: "10.200.12.235/24",
+      gateway: "10.200.12.1"
+    }
+  ]
+  mode: Redirect
+  redirect: {
+    redirectRules: [
+      {
+        destinationIP: "10.200.12.232",
+        port: 8080,
+        protocol: TCP
+      }
+    ]
+  }
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: egress-1
+  namespace: testvn-egress
+spec:
+  ports:
+  - name: web-app
+    protocol: TCP
+    port: 8080
+  type: ClusterIP
+  selector:
+    app: egress-router-cni 
