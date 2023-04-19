@@ -14,7 +14,7 @@ data:
             storageClassName: thin
             resources:
               requests:
-                storage: 100
+                storage: 100Gi
       alertmanagerMain:
         volumeClaimTemplate:
           metadata:
@@ -23,4 +23,4 @@ data:
             storageClassName: thin
             resources:
               requests:
-                storage: 10
+                storage: 10Gi
