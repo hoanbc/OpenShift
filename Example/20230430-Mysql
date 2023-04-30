@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: mysql-ocs
+spec:
+  selector:
+         matchLabels:
+      app: mysql-ocs
+  serviceName: "mysql-ocs"
+  podManagementPolicy: Parallel
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql-ocs
+    spec:
+      imagePullSecrets:
+      - name: mysql-uat-secret
+      serviceAccountName: mysql-serviceaccount
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql-ocs
+        image: quay-uat.lottefn.vn/jits/mysql:v8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: MYSQL_DATABASE
+          value: wordpress
+        - name: MYSQL_USER
+          value: admin
+        - name: MYSQL_PASSWORD
+          value: secret
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-ocs-data
+          mountPath: /var/lib/mysql
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+      tolerations:
+      - effect: NoSchedule
+        operator: Equal
+        key: machine-role
+        value: infra
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-ocs-data
+    spec:
+      storageClassName: thin
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 8Gi
