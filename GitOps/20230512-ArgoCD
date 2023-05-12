@@ -1,0 +1,183 @@
+###Install GitOps Operator
+Operators -> OperatorHub -> Red Hat OpenShift GitOps -> Install
+
+###Install ArgoCD
+Operators -> Installed -> Red Hat OpenShift GitOps -> ArgoCD -> 
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ArgoCD
+  name: argocd
+  namespace: testvn-argocd
+spec:
+  server:
+    autoscale:
+      enabled: false
+    grpc:
+      ingress:
+        enabled: false
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 125m
+        memory: 128Mi
+    route:
+      enabled: true
+    service:
+      type: ''
+  grafana:
+    enabled: false
+    ingress:
+      enabled: false
+    route:
+      enabled: false
+  monitoring:
+    enabled: false
+  notifications:
+    enabled: false
+  prometheus:
+    enabled: false
+    ingress:
+      enabled: false
+    route:
+      enabled: false
+  initialSSHKnownHosts: {}
+  sso:
+    dex:
+      openShiftOAuth: true
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 250m
+          memory: 128Mi
+    provider: dex
+  rbac:
+    defaultPolicy: 'role:admin'
+    policy: |
+      g, system:cluster-admins, role:admin
+    scopes: '[groups]'
+  repo:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+  resourceExclusions: |
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun        
+  ha:
+    enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  tls:
+    ca: {}
+  redis:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+  controller:
+    processors: {}
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+    sharding: {}
+
+###Create argocd secret
+kind: Secret
+apiVersion: v1
+metadata:
+  name: in-cluster
+  namespace: testvn-argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+  annotations:
+    managed-by: argocd.argoproj.io
+data:
+  config: eyJ0bHNDbGllbnRDb25maWciOnsiaW5zZWN1cmUiOmZhbHNlfX0=
+  name: aW4tY2x1c3Rlcg==
+  namespaces: dGVzdHZuLWFyZ29jZCx0ZXN0dm4td29yZHByZXNz
+  server: aHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3Zj
+type: Opaque
+
+###Create argocd repo  (same create repo on ArgoCD UI)
+kind: Secret
+apiVersion: v1
+metadata:
+  name: repo-2264682546
+  namespace: testvn-argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+  annotations:
+    managed-by: argocd.argoproj.io
+data:
+  password: Z2xwYXQtdnp6dnlqdHlrSEJESDdjU2d6ZUM=
+  project: YXJnb2Nk
+  type: Z2l0
+  url: aHR0cHM6Ly9naXRsYWIudGVzdHZuLmNsaWNrL2Rldm9wcy9hcmdvY2QuZ2l0
+  username: bm90LXVzZWQ=
+type: Opaque
+
+###Create Project  (same create project on ArgoCD UI)
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: testvn-wordpress
+  namespace: testvn-argocd
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  destinations:
+    - name: in-cluster
+      namespace: testvn-wordpress
+      server: 'https://kubernetes.default.svc'
+  sourceRepos:
+    - 'https://gitlab.testvn.click/devops/argocd.git'
+
+###Create Application (same create application on ArgoCD UI)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: testvn-wordpress
+  namespace: testvn-argocd
+spec:
+  destination:
+    namespace: testvn-wordpress
+    server: 'https://kubernetes.default.svc'
+  project: testvn-wordpress
+  source:
+    path: wordpress
+    repoURL: 'https://gitlab.testvn.click/devops/argocd.git'
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+    prune: true
+    selfHeal: true
+        
+
+
