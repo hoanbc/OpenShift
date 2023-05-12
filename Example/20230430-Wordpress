@@ -1,3 +1,13 @@
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: mysql-pass
+  namespace: testvn-wordpress
+data:
+  password: 1111
+type: Opaque
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -116,6 +126,10 @@ spec:
       - image: wordpress:6.2.0-apache
         name: wordpress
         env:
+        - name: WORDPRESS_DB_NAME
+          value: wordpress
+        - name: WORDPRESS_DB_USER
+          value: root
         - name: WORDPRESS_DB_HOST
           value: wordpress-mysql
         - name: WORDPRESS_DB_PASSWORD
@@ -133,4 +147,86 @@ spec:
       - name: wordpress-persistent-storage
         persistentVolumeClaim:
           claimName: wp-pv-claim
+---
 oc adm policy add-scc-to-user anyuid system:serviceaccount:testvn-wordpress:mysvcacct
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: wordpress-route
+spec:
+  host: wordpress.testvn.click
+  to:
+    kind: Service
+    name: wordpress
+    weight: 100
+  port:
+    targetPort: 80
+  tls:
+    termination: edge
+    certificate: |-
+      -----BEGIN CERTIFICATE-----
+     9999
+      -----END CERTIFICATE-----
+    key: |-
+      -----BEGIN PRIVATE KEY-----
+      9999
+      -----END PRIVATE KEY-----
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+  ---
+  kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: np-frontend
+spec:
+  podSelector:
+    matchLabels:
+      app: wordpress
+      tier: frontend
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 5353
+      to:
+        - podSelector:
+            matchLabels:
+              dns.operator.openshift.io/daemonset-dns: default
+          namespaceSelector: {}
+    - ports:
+        - protocol: TCP
+          port: 3306
+      to:
+        - podSelector:
+            matchLabels:
+              app: wordpress
+              tier: mysql
+  policyTypes:
+    - Ingress
+    - Egress
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: np-mysql
+spec:
+  podSelector:
+    matchLabels:
+      app: wordpress
+      tier: mysql
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3306
+      from:
+        - podSelector:
+            matchLabels:
+              app: wordpress
+              tier: frontend
+  policyTypes:
+    - Ingress
+    - Egress
