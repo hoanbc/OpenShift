@@ -1,0 +1,23 @@
+###Issue: podman login returns 'too many requests to registry' against Quay Mirror Registry
+$ podman login -u admin -p password https://quay.testvn.click
+Error: authenticating creds for "quay.testvn.click": too many requests to registry
+
+
+###Resolution: Reset the invalid login attempts by running an UPDATE query on the quay-postgres container using podman exec. Before executing any of these statements, we strongly advise making a complete backup of the database. In case of any issues, the Quay database can be restored from the backup
+$ QUAY_POSTGRES=`podman ps | grep quay-postgres | awk '{print $1}'`
+$ podman exec -it $QUAY_POSTGRES psql -d quay -c "UPDATE "public.user" SET invalid_login_attempts = 0 WHERE username = 'admin'"
+UPDATE 1
+
+###Diagnostic Steps:The article assumes that the user has installed and deployed the Quay Mirror Registry.To reproduce the error, the user needs to log into the registry using podman login with the appropriate credentials. If the error message appears, the user should check the number of invalid login attempts using a SELECT query in the quay-postgres container and see if the number is greater than zero.
+Here are the step-by-step instructions:
+Log in to the registry using podman login with the appropriate credentials:
+
+$ podman login -u admin -p password https://quay.testvn.click
+Error: authenticating creds for "quay.testvn.click": too many requests to registry
+If the error occurs, SSH into the VM and check the number of invalid login attempts using the SELECT query in the quay-postgres container:
+
+$ QUAY_POSTGRES=`podman ps | grep quay-postgres | awk '{print $1}'`
+$ "SELECT invalid_login_attempts FROM public.user where username = 'admin'"
+
+
+KB: https://access.redhat.com/solutions/7011418
