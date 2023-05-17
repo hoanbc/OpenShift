@@ -4,19 +4,68 @@ Operators -> OperatorHub -> Red Hat OpenShift GitOps -> Install
 ###Install ArgoCD
 Operators -> Installed -> Red Hat OpenShift GitOps -> ArgoCD -> 
 ---
-apiVersion: argoproj.io/v1alpha1
 kind: ArgoCD
+apiVersion: argoproj.io/v1alpha1
+metadata:
   name: argocd
   namespace: testvn-argocd
 spec:
+  nodePlacement: 
+    nodeSelector: 
+      node-role.kubernetes.io/infra: ""
+    tolerations:
+    - effect: NoSchedule
+      operator: Equal
+      key: node-function
+      value: infra
+  controller:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1048Mi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  ha:
+    enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  rbac:
+    defaultPolicy: 'role:admin'
+    policy: |
+      g, system:cluster-admins, role:admin
+    scopes: '[groups]'
+  redis:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  repo:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  resourceExclusions: |
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun        
   server:
-    autoscale:
-      enabled: false
-    grpc:
-      ingress:
-        enabled: false
-    ingress:
-      enabled: false
+    host: argocd.apps.ocp.testvn.click
     resources:
       limits:
         cpu: 500m
@@ -24,27 +73,12 @@ spec:
       requests:
         cpu: 125m
         memory: 128Mi
+    insecure: true
     route:
       enabled: true
-    service:
-      type: ''
-  grafana:
-    enabled: false
-    ingress:
-      enabled: false
-    route:
-      enabled: false
-  monitoring:
-    enabled: false
-  notifications:
-    enabled: false
-  prometheus:
-    enabled: false
-    ingress:
-      enabled: false
-    route:
-      enabled: false
-  initialSSHKnownHosts: {}
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
   sso:
     dex:
       openShiftOAuth: true
@@ -56,56 +90,10 @@ spec:
           cpu: 250m
           memory: 128Mi
     provider: dex
-  rbac:
-    defaultPolicy: 'role:admin'
-    policy: |
-      g, system:cluster-admins, role:admin
-    scopes: '[groups]'
-  repo:
-    resources:
-      limits:
-        cpu: 500m
-        memory: 512Mi
-      requests:
-        cpu: 50m
-        memory: 256Mi
-  resourceExclusions: |
-    - apiGroups:
-      - tekton.dev
-      clusters:
-      - '*'
-      kinds:
-      - TaskRun
-      - PipelineRun        
-  ha:
-    enabled: false
-    resources:
-      limits:
-        cpu: 500m
-        memory: 256Mi
-      requests:
-        cpu: 250m
-        memory: 128Mi
-  tls:
-    ca: {}
-  redis:
-    resources:
-      limits:
-        cpu: 500m
-        memory: 512Mi
-      requests:
-        cpu: 50m
-        memory: 256Mi
-  controller:
-    processors: {}
-    resources:
-      limits:
-        cpu: 500m
-        memory: 1Gi
-      requests:
-        cpu: 50m
-        memory: 256Mi
-    sharding: {}
+
+
+###Allow argocd access namespace
+oc label namespace <namespace> argocd.argoproj.io/managed-by=<instance_name>
 
 ###Create argocd secret
 kind: Secret
@@ -118,10 +106,10 @@ metadata:
   annotations:
     managed-by: argocd.argoproj.io
 data:
-  config: eyJ0bHNDbGllbnRDb25maWciOnsiaW5zZWN1cmUiOmZhbHNlfX0=
-  name: aW4tY2x1c3Rlcg==
-  namespaces: dGVzdHZuLWFyZ29jZCx0ZXN0dm4td29yZHByZXNz
-  server: aHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3Zj
+  config: eyJ0bHNDbGllbn1iaW5zZWN1cmUiOmZhbHNlfX0=
+  name: aW4tY1lcg==
+  namespaces: dGVzdHZuLWFy14td29yZHByZXNz
+  server: aHR0cHM6Ly9rd1ZmF1bHQuc3Zj
 type: Opaque
 
 ###Create argocd repo  (same create repo on ArgoCD UI)
