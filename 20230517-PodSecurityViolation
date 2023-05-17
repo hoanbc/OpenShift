@@ -1,0 +1,6 @@
+oc adm must-gather -- /usr/bin/gather_audit_logs
+zgrep -h pod-security.kubernetes.io/audit-violations must-gather.local.*/quay*/audit_logs/kube-apiserver/*log.gz | jq -r 'select(.annotations["pod-security.kubernetes.io/audit-violations"] != null) | (.objectRef | .namespace + " " + .name + " " + .resource) + " " + .annotations["pod-security.kubernetes.io/audit-violations"]' | sort | uniq -c
+zgrep -h pod-security.kubernetes.io/audit-violations must-gather.local.*/quay*/audit_logs/kube-apiserver/*log.gz | jq -r 'select((.annotations["pod-security.kubernetes.io/audit-violations"] != null) and (.objectRef.resource=="pods")) | .objectRef.namespace + " " + .objectRef.name + " " + .objectRef.resource' | sort | uniq -c
+
+
+Link: https://access.redhat.com/solutions/6976583
