@@ -1,3 +1,6 @@
+###Disable default argocd instance
+oc patch subscription openshift-gitops-operator -n openshift-operators --type=merge -p='{"spec":{"config":{"env":[{"name":"DISABLE_DEFAULT_ARGOCD_INSTANCE","value":"true"}]}}}'
+
 ###Install GitOps Operator
 Operators -> OperatorHub -> Red Hat OpenShift GitOps -> Install
 
