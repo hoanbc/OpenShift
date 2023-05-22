@@ -1,0 +1,66 @@
+oc create testvn-acs
+
+apiVersion: platform.stackrox.io/v1alpha1
+kind: Central
+metadata:
+  resourceVersion: '34612426'
+  name: acs-central-services
+  labels:
+    function: acs
+spec:
+  central:
+    db:
+      isEnabled: Default
+      persistence:
+        persistentVolumeClaim:
+          claimName: central-db
+          storageClassName: thin
+          size: 25Gi
+    defaultTLSSecret:
+      name: central-default-tls-cert
+    exposure:
+      route:
+        enabled: true
+        host: acs.apps.ocpuat.lottefn.vn
+    persistence:
+      persistentVolumeClaim:
+        claimName: stackrox-db
+        storageClassName: thin
+        size: 25Gi
+    resources:
+      limits:
+        cpu: 4000m
+        memory: 8Gi
+    tolerations:
+      - effect: NoSchedule
+        key: machine-role
+        operator: Equal
+        value: infra
+  scanner:
+    analyzer:
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1500Mi
+      scaling:
+        autoScaling: Enabled
+        maxReplicas: 3
+        minReplicas: 1
+        replicas: 2
+      tolerations:
+        - effect: NoSchedule
+          key: machine-role
+          operator: Equal
+          value: infra
+    db:
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+
+      tolerations:
+        - effect: NoSchedule
+          key: machine-role
+          operator: Equal
+          value: infra
+    scannerComponent: Enabled

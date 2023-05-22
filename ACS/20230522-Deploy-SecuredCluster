@@ -1,0 +1,66 @@
+oc project testvn-acs
+oc apply -f ocpuat-cluster-init-secrets.yaml
+
+apiVersion: platform.stackrox.io/v1alpha1
+kind: SecuredCluster
+metadata:
+  labels:
+    function: acs
+  name: acs-secured-cluster-services
+  namespace: lfvn-acs
+spec:
+  admissionControl:
+    bypass: BreakGlassAnnotation
+    contactImageScanners: DoNotScanInline
+    listenOnCreates: true
+    listenOnEvents: true
+    listenOnUpdates: true
+    resources:
+      limits:
+        cpu: 200m
+        memory: 250Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
+    timeoutSeconds: 20
+    tolerations:
+      - effect: NoSchedule
+        key: machine-role
+        operator: Equal
+        value: infra
+  auditLogs:
+    collection: Auto
+  clusterName: ocpuat
+  perNode:
+    collector:
+      collection: EBPF
+      imageFlavor: Regular
+      resources:
+        limits:
+          cpu: 200m
+          memory: 500Mi
+        requests:
+          cpu: 50m
+          memory: 100Mi
+    compliance:
+      resources:
+        limits:
+          cpu: 200m
+          memory: 500Mi
+        requests:
+          cpu: 50m
+          memory: 100Mi
+    taintToleration: TolerateTaints
+  sensor:
+    resources:
+      limits:
+        cpu: 250m
+        memory: 500Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
+    tolerations:
+      - effect: NoSchedule
+        key: machine-role
+        operator: Equal
+        value: infra
