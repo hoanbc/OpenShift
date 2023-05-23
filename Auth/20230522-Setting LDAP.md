@@ -1,4 +1,6 @@
-    - ldap:
+###Administration -> Cluster Settings -> Configuration -> OAuth -> yaml
+```yml
+      - ldap:
         attributes:
           email:
             - mail
@@ -19,3 +21,4 @@
       mappingMethod: claim
       name: Active Directory
       type: LDAP
+```
