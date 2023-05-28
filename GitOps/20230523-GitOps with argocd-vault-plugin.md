@@ -1,4 +1,4 @@
-### GitOps with Vault
+### GitOps with argocd-vault-plugin
 ##### 1) Create Vault Configuration Secret
 ```yml
 kind: Secret
@@ -199,3 +199,8 @@ spec:
       prune: false
       selfHeal: false
 ```
+Link: 
+- https://cloud-redhat-com.translate.goog/blog/how-to-use-hashicorp-vault-and-argo-cd-for-gitops-on-openshift?_x_tr_sl=vi&_x_tr_tl=en&_x_tr_hl=vi&_x_tr_pto=wapp
+- https://cloud.redhat.com/blog/how-to-use-hashicorp-vault-and-argo-cd-for-gitops-on-openshift
+- https://colinwilson.uk/2022/03/27/secret-management-with-gitops-and-argo-cd-vault-plugin/
+- https://argocd-vault-plugin.readthedocs.io/en/stable/installation/
