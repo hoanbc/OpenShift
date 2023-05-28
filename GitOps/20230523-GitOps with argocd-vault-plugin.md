@@ -9,10 +9,8 @@ metadata:
 data:
   AVP_AUTH_TYPE: dG9rZW4=
   AVP_TYPE: dmF1bHQ=
-  SOPS_AGE_KEY_FILE: Ly5jb25maWcvc29wcy9hZ2Uva2V5LnR4dA==
   VAULT_ADDR: aHR0cHM6Ly92YXVsdC50ZXN0dm4uY2xpY2s=
   VAULT_TOKEN: aHZzLnNXcm01TTRmVEFCcHdiNkZ4Yng4cjNJQQ==
-  XDG_CONFIG_HOME: Ly5jb25maWc=
 type: Opaque
 ```
 ##### 2) Install GitOps with argocd-vault-plugin (custom-tools)
@@ -183,6 +181,14 @@ spec:
     env:
       - name: helm_args
         value: '-f values123.yaml'
+      #- name: AVP_AUTH_TYPE
+      #  value: token
+      #- name: AVP_TYPE
+      #  value: vault
+      #- name: AVP_VAULT_ADDR
+      #  value: 'https://vault.testvn.click'
+      #- name: VAULT_TOKEN
+      #  value: hvs.sWrm5M4fTABpwb6Fxbx8r3IA  
     path: hostform-los-uat-fe-123
     repoURL: 'https://gitlab.testvn.click/devops/argocd.git'
     targetRevision: HEAD
