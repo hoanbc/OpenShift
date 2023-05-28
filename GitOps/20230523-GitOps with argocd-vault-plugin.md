@@ -169,18 +169,19 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: test1112
+  name: test12121
+  namespace: testvn-argocd
 spec:
   destination:
-    name: ''
     namespace: testvn-demo
     server: 'https://kubernetes.default.svc'
+  project: default
   source:
-  plugin:
-    name: argocd-vault-plugin
-    env:
-      - name: helm_args
-        value: '-f values123.yaml'
+    path: hostform-los-uat-fe-123
+    plugin:
+      env:
+        - name: helm_args
+          value: '-f values123.yaml'
       #- name: AVP_AUTH_TYPE
       #  value: token
       #- name: AVP_TYPE
@@ -189,11 +190,9 @@ spec:
       #  value: 'https://vault.testvn.click'
       #- name: VAULT_TOKEN
       #  value: hvs.sWrm5M4fTABpwb6Fxbx8r3IA  
-    path: hostform-los-uat-fe-123
+      name: argocd-vault-plugin
     repoURL: 'https://gitlab.testvn.click/devops/argocd.git'
     targetRevision: HEAD
-  sources: []
-  project: wordpress
   syncPolicy:
     automated:
       prune: false
