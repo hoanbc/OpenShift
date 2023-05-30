@@ -11,6 +11,9 @@ data:
   AVP_TYPE: dmF1bHQ=
   VAULT_ADDR: aHR0cHM6Ly92YXVsdC50ZXN0dm4uY2xpY2s=
   VAULT_TOKEN: aHZzLnNXcm01TTRmVEFCcHdiNkZ4Yng4cjNJQQ==
+  #AVP_PASSWORD: ZUhrTEdGSFAhazQmcDhvQzlNRyY=
+  #AVP_TYPE: dmF1bHQ=
+  #AVP_USERNAME: ZGlnaXRhbC1sZW5kaW5nLWFyZ29jZC11YXQ=
 type: Opaque
 ```
 ##### 2) Install GitOps with argocd-vault-plugin (custom-tools)
