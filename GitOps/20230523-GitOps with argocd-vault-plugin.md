@@ -1,5 +1,5 @@
 ### GitOps with argocd-vault-plugin
-##### 1) Create Vault Configuration Secret
+##### 1) Create Vault Configuration Secret (Need add manual to deployment/argocd-repo-server)
 ```yml
 kind: Secret
 apiVersion: v1
@@ -16,7 +16,35 @@ data:
   #AVP_USERNAME: ZGlnaXRhbC1sZW5kaW5nLWFyZ29jZC11YXQ=
 type: Opaque
 ```
-##### 2) Install GitOps with argocd-vault-plugin (custom-tools)
+##### 2) Create configmaps with RootCA (if use self-sign)
+```yml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: cluster-root-ca-bundle
+  namespace: dl-argocd-uat-ns
+  uid: 339e8000-03e2-4f0a-90ec-619079d788e0
+  resourceVersion: '43280162'
+  creationTimestamp: '2023-05-29T07:59:51Z'
+  managedFields:
+    - manager: Mozilla
+      operation: Update
+      apiVersion: v1
+      time: '2023-05-29T08:11:36Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:data':
+          .: {}
+          'f:ca-bundle.crt': {}
+data:
+  ca-bundle.crt: |
+    ###Public
+    -----BEGIN CERTIFICATE----- **(example)**
+    MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G
+    A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjMxEzARBgNVBAoTCkdsb2JhbFNp
+    -----END CERTIFICATE-----
+```
+##### 3) Install GitOps with argocd-vault-plugin (custom-tools)
 ```yml
 apiVersion: argoproj.io/v1alpha1
 kind: ArgoCD
@@ -98,9 +126,15 @@ spec:
       - mountPath: /usr/local/bin/argocd-vault-plugin
         name: custom-tools
         subPath: argocd-vault-plugin
+      - mountPath: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+        name: cluster-root-ca-bundle
+        subPath: ca-bundle.crt
     volumes:
       - emptyDir: {}
         name: custom-tools
+      - configMap:
+          name: cluster-root-ca-bundle
+        name: cluster-root-ca-bundle
   #kustomizeBuildOptions: '--enable-alpha-plugins'
   configManagementPlugins: |
     - name: argocd-vault-plugin
@@ -111,11 +145,11 @@ spec:
         command: ["sh", "-c"]
         args: ["helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_helm_args} . --include-crds | argocd-vault-plugin generate -"]
 ```
-##### 3) Create a Secret in Vault (Example)
+##### 4) Create a Secret in Vault (Example)
 ![image](https://github.com/hoanbc/OpenShift/assets/26288807/28972387-c607-45b5-849d-8196886daaa9)
 ![image](https://github.com/hoanbc/OpenShift/assets/26288807/69c09a8c-92e1-4dbb-ac27-5a330b2916c8)
 
-##### 4) Create Helm Chart
+##### 5) Create Helm Chart
 ```yml
 #Note: with .dockerconfigjson key need convert to base64 (<secretpull> -> base64: PHNlY3JldHB1bGw+ )
 ---
@@ -167,7 +201,7 @@ spec:
     name:  uat-test123-public-svc
     weight: 100
 ```
-##### 5) Create Applications ArgoCD
+##### 6) Create Applications ArgoCD
 ```yml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
