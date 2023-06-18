@@ -1,0 +1,17 @@
+netbackupkops:
+  replicas: 1
+  containers:
+    manager_proxy:
+      image: quay.testvn.click/openshift4/ose-kube-rbac-proxy:820f8a96
+    manager:
+      image: quay.testvn.click/veritas-technologies/netbackupkops:10.0.1
+      resources:
+        limits:
+          cpu: 150m
+          memory: 600Mi
+        requests:
+          cpu: 100m
+          memory: 500Mi
+  pvMountPath: /usr/openv
+  imagePullSecrets:
+    name: netbackupkops-docker-cred

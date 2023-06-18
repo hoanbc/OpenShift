@@ -1,0 +1,2127 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: backups.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: Backup
+    listKind: BackupList
+    plural: backups
+    singular: backup
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Backup is the Schema for NetBackup's backups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BackupSpec defines the desired state of Backup
+            properties:
+              backupOptions:
+                description: BackupOptions which are translated to Velero's Backup spec.
+                properties:
+                  excludedNamespaces:
+                    description: ExcludedNamespaces contains a list of namespaces that are not included in the backup.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  excludedResources:
+                    description: ExcludedResources is a slice of resource names that are not included in the backup.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  includeClusterResources:
+                    description: IncludeClusterResources specifies whether cluster-scoped resources should be included for consideration in the backup.
+                    nullable: true
+                    type: boolean
+                  includedNamespaces:
+                    description: IncludedNamespaces is a slice of namespace names to include objects from. If empty, all namespaces are included.
+                    items:
+                      type: string
+                    type: array
+                  includedResources:
+                    description: IncludedResources is a slice of resource names to include in the backup. If empty, all resources are included.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  labelSelector:
+                    description: LabelSelector is a metav1.LabelSelector to filter with when adding individual objects to the backup. If empty or nil, all objects are included. Optional.
+                    nullable: true
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
+                        items:
+                          description: A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector applies to.
+                              type: string
+                            operator:
+                              description: operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.
+                              type: string
+                            values:
+                              description: values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed.
+                        type: object
+                    type: object
+                  snapshotVolumes:
+                    description: SnapshotVolumes specifies whether to take cloud snapshots of any PV's referenced in the set of objects included in the Backup.
+                    nullable: true
+                    type: boolean
+                  storageLocation:
+                    description: StorageLocation is a string containing the name of a BackupStorageLocation where the backup should be stored.
+                    type: string
+                  ttl:
+                    description: TTL is a time.Duration-parseable string describing how long the Backup should be retained for.
+                    type: string
+                  volumeSnapshotLocations:
+                    description: VolumeSnapshotLocations is a list containing names of VolumeSnapshotLocations associated with this backup.
+                    items:
+                      type: string
+                    type: array
+                required:
+                - includedNamespaces
+                - ttl
+                type: object
+              backupServer:
+                description: Backup server name.
+                type: string
+              clusterName:
+                description: ClusterName is the kubernetes cluster hostname/ip-address
+                type: string
+            required:
+            - backupOptions
+            - backupServer
+            - clusterName
+            type: object
+          status:
+            description: BackupStatus defines the observed state of Backup.
+            properties:
+              attributes:
+                description: Attributes related to the request.
+                properties:
+                  backupExpiration:
+                    description: BackupExpiration is when this backup is eligible for cleanup.
+                    type: string
+                  backupLibVersion:
+                    description: BackupLibVersion is the backup format version.
+                    type: string
+                  backupLog:
+                    description: BackupLog contains the entire backup log for the job.
+                    type: string
+                  backupSize:
+                    description: BackupSize is the size of backup (metadata) in bytes
+                    format: int64
+                    type: integer
+                  completionTimestamp:
+                    description: CompletionTimestamp is the timestamp when the velero backup finished.
+                    type: string
+                  errorCount:
+                    description: Errors is the count of error messages generated during backup.
+                    type: integer
+                  failedVolumes:
+                    description: FailedVolumeSnapshots is a list of all volumes that could not be snapshotted
+                    items:
+                      description: FailedVolumeSnapshots indicates failed volumes and reason for failure
+                      properties:
+                        failedVolumeName:
+                          description: FailedVolumeName is the name of the PVC that could not be snapshotted
+                          type: string
+                        failedVolumeReason:
+                          description: FailedVolumeReason is the reason for which PVC could not be snapshotted
+                          type: string
+                      type: object
+                    type: array
+                  itemsBackedUp:
+                    description: ItemsBackedUp represent the actual number of resources velero backed up.
+                    type: integer
+                  mediaDescriptorInfo:
+                    description: MediaDescriptorInfo additional information on the backup image metadata
+                    properties:
+                      backupName:
+                        description: BackupName backup name
+                        type: string
+                      clusterName:
+                        description: ClusterName kubernetes cluster fqdn
+                        type: string
+                      includedNamespaces:
+                        description: NamespaceName name of the namespace being backed up
+                        items:
+                          type: string
+                        type: array
+                      resourceList:
+                        additionalProperties:
+                          items:
+                            type: string
+                          type: array
+                        description: List of various resources backed up in this backup request.
+                        type: object
+                    required:
+                    - backupName
+                    - clusterName
+                    - includedNamespaces
+                    type: object
+                  pvSnapshotList:
+                    description: List of various PV snapshots present in the backup.
+                    items:
+                      description: VeleroSnapshot is the near replica of Velero's snapshot resource
+                      properties:
+                        backupName:
+                          description: BackupName is the name of the Velero backup this snapshot is associated with.
+                          type: string
+                        backupUID:
+                          description: BackupUID is the UID of the Velero backup this snapshot is associated with.
+                          type: string
+                        location:
+                          description: Location is the name of the VolumeSnapshotLocation where this snapshot is stored.
+                          type: string
+                        persistentVolumeName:
+                          description: PersistentVolumeName is the Kubernetes name for the volume.
+                          type: string
+                        providerSnapshotID:
+                          description: ProviderSnapshotID is the ID of the snapshot taken in the cloud provider API of this volume.
+                          type: string
+                        providerVolumeID:
+                          description: ProviderVolumeID is the provider's ID for the volume.
+                          type: string
+                        volumeAZ:
+                          description: VolumeAZ is the where the volume is provisioned in the cloud provider.
+                          type: string
+                        volumeIOPS:
+                          description: VolumeIOPS is the optional value of provisioned IOPS for the disk/volume in the cloud provider API.
+                          format: int64
+                          type: integer
+                        volumeSize:
+                          description: VolumeSize
+                          format: int64
+                          type: integer
+                        volumeType:
+                          description: VolumeType is the type of the disk/volume in the cloud provider API.
+                          type: string
+                      required:
+                      - backupName
+                      - backupUID
+                      - location
+                      - persistentVolumeName
+                      - providerVolumeID
+                      - volumeType
+                      type: object
+                    type: array
+                  pvSnapshotsAttempted:
+                    description: Count of PV snapshots attempted.
+                    type: integer
+                  pvSnapshotsCompleted:
+                    description: Count of PV snapshots completed.
+                    type: integer
+                  startTimestamp:
+                    description: StartTimestamp is the timestamp when the velero backup started.
+                    type: string
+                  totalItems:
+                    description: TotalItems represent the total number of resources velero listed for backup.
+                    type: integer
+                  volumeSnapshotSpecificInfoList:
+                    description: List of PVC CSI volume snapshots
+                    items:
+                      description: VolumeSnapshotSpecificInfo captures the attributes pf PVC snapshots.
+                      properties:
+                        persistentVolumeClaimName:
+                          description: PersistentVolumeClaimName is the name of the PVC we are taking snapshot of
+                          type: string
+                        persistentVolumeClaimSize:
+                          description: PersistentVolumeClaimSize is the claim size of PVC
+                          type: string
+                        persistentVolumeClaimSizeInBytes:
+                          description: PersistentVolumeClaimSizeInBytes is the claim size of PVC in bytes
+                          format: int64
+                          type: integer
+                        persistentVolumeClaimUID:
+                          description: PersistentVolumeClaimUID is the UID of PVC resource
+                          type: string
+                        storageClassName:
+                          description: StorageClassName is the name of storage class associated with PVC
+                          type: string
+                        volumeMode:
+                          description: VolumeMode is Volume Mode specified in PVC
+                          type: string
+                        volumeSnapshotName:
+                          description: VolumeSnapshotName is name of the volume snapshot
+                          type: string
+                      type: object
+                    type: array
+                  warningCount:
+                    description: Warnings is the count of warning messages generated during backup.
+                    type: integer
+                type: object
+              errorDetails:
+                description: ErrorDetails related to this request.
+                properties:
+                  additionalErrorMessages:
+                    additionalProperties:
+                      items:
+                        type: string
+                      type: array
+                    description: AdditionalErrorMessages contains the error/warning messages from the underlying library.
+                    nullable: true
+                    type: object
+                  errorCode:
+                    description: ErrorCode represents the error code in case the request fails.
+                    type: integer
+                  errors:
+                    description: Errors has the error messages corresponding to the failure.
+                    type: string
+                  validationErrors:
+                    description: ValidationErrors is a slice of all validation errors (if applicable).
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                type: object
+              status:
+                description: Phase of the NetBackup backup resource.
+                enum:
+                - New
+                - InProgress
+                - ValidationFailed
+                - Completed
+                - Failed
+                - PartiallyFailed
+                - Deleting
+                - Uploading
+                type: string
+              veleroStatus:
+                description: VeleroStatus of the NetBackup backup resource. This should be not exported and is used for internal state tracking.
+                enum:
+                - New
+                - InProgress
+                - ValidationFailed
+                - Completed
+                - Failed
+                - PartiallyFailed
+                - Deleting
+                - Uploading
+                type: string
+            required:
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: backupservercerts.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: BackupServerCert
+    listKind: BackupServerCertList
+    plural: backupservercerts
+    singular: backupservercert
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: BackupServerCert is the Schema for the backupservercerts API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BackupServerCertSpec defines the desired state of BackupServerCert
+            properties:
+              backupServer:
+                description: Name of the backup server
+                type: string
+              certificateOperation:
+                type: string
+              certificateType:
+                type: string
+              clusterName:
+                description: cluster name
+                type: string
+              ecaAttributes:
+                nullable: true
+                properties:
+                  ecaCreateOptions:
+                    properties:
+                      copyCertsFromSecret:
+                        type: boolean
+                      ecaSecretName:
+                        type: string
+                      isKeyEncrypted:
+                        type: boolean
+                    required:
+                    - copyCertsFromSecret
+                    - ecaSecretName
+                    - isKeyEncrypted
+                    type: object
+                  ecaUpdateOptions:
+                    properties:
+                      ecaCrlCheck:
+                        description: ECA_CRL_CHECK option lets you specify the revocation check level for external certificates of the host. It also lets you disable the revocation check for the external certificates. Based on the check, revocation status of the certificate is validated against the Certificate Revocation List (CRL) during host communication.
+                        type: string
+                      ecaCrlRefreshHours:
+                        description: 'ECA_CRL_REFRESH_HOURS option specifies the time interval in hours to download the CRLs from the URLs that are specified in the peer host certificate''s CRL distribution points (CDP). Minimum: 0 hrs Maximum: 4380 hrs Default: 24 hrs'
+                        maximum: 4380
+                        minimum: 0
+                        type: integer
+                    type: object
+                type: object
+              nbcaAttributes:
+                nullable: true
+                properties:
+                  nbcaCreateOptions:
+                    nullable: true
+                    properties:
+                      secretName:
+                        type: string
+                    required:
+                    - secretName
+                    type: object
+                  nbcaRemoveOptions:
+                    nullable: true
+                    properties:
+                      hostID:
+                        type: string
+                    required:
+                    - hostID
+                    type: object
+                  nbcaUpdateOptions:
+                    nullable: true
+                    properties:
+                      force:
+                        description: to force certificate deployment to a host or to overwrite the existing host ID-based certificate information and fetch a new certificate
+                        type: boolean
+                      secretName:
+                        type: string
+                    required:
+                    - secretName
+                    type: object
+                type: object
+            required:
+            - backupServer
+            - certificateOperation
+            - certificateType
+            - clusterName
+            type: object
+          status:
+            description: BackupServerCertStatus defines the observed state of BackupServerCert
+            properties:
+              additionalStatus:
+                items:
+                  type: string
+                type: array
+              errorDetails:
+                description: ErrorDetails defines the error details for the BackupServerCert operation
+                properties:
+                  additionalErrorInfo:
+                    items:
+                      properties:
+                        level:
+                          description: Level defines the error message severity
+                          enum:
+                          - Warning
+                          - Error
+                          type: string
+                        msg:
+                          type: string
+                      required:
+                      - level
+                      - msg
+                      type: object
+                    type: array
+                  errCode:
+                    description: ErrorCode represents the error codes associated with the response.
+                    type: integer
+                  errMessage:
+                    type: string
+                required:
+                - errCode
+                - errMessage
+                type: object
+              phase:
+                description: BackupServerCertRequestPhase represents the state of BackupServerCert request
+                enum:
+                - Success
+                - Failed
+                - InProgress
+                - ValidationFailed
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: cleanupnburesources.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: CleanupNbuResources
+    listKind: CleanupNbuResourcesList
+    plural: cleanupnburesources
+    singular: cleanupnburesources
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: CleanupNbuResources is the Schema for the cleanupnburesources API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CleanupNbuResourcesSpec defines the desired state of CleanupNbuResources
+            properties:
+              dataMoverName:
+                description: DataMoverName is an example field of CleanupDatamover. Edit cleanupdatamover_types.go to remove/update
+                type: string
+            required:
+            - dataMoverName
+            type: object
+          status:
+            description: CleanupNbuResourcesStatus defines the observed state of CleanupNbuResources
+            properties:
+              attributes:
+                description: Attributes related to the request.
+                properties:
+                  deleteFailedResources:
+                    description: DeleteFailedResource is a list of resources failed to be deleted
+                    items:
+                      type: string
+                    type: array
+                  errorDetails:
+                    description: ErrorDetails related to this request.
+                    nullable: true
+                    properties:
+                      errorCode:
+                        description: ErrorCode represents the error code in case the request fails.
+                        type: integer
+                      errors:
+                        description: Errors has the error messages corresponding to the failure.
+                        type: string
+                    type: object
+                type: object
+              status:
+                description: Phase of the NetBackup datamover cleanup resource.
+                enum:
+                - InProgress
+                - Completed
+                - Failed
+                type: string
+            required:
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: clusterinfoes.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: ClusterInfo
+    listKind: ClusterInfoList
+    plural: clusterinfoes
+    singular: clusterinfo
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: ClusterInfo is the Schema for the clusterinfoes API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterInfoSpec defines the desired state of ClusterInfo
+            properties:
+              fetchClusterDetails:
+                description: Instructs if the controller should fetch the cluster details.
+                type: boolean
+              serverName:
+                description: Name of the primary server.
+                type: string
+            required:
+            - fetchClusterDetails
+            - serverName
+            type: object
+          status:
+            description: ClusterInfoStatus defines the observed state of ClusterInfo
+            properties:
+              attributes:
+                description: Attributes associated with the ClusterInfo Request.
+                properties:
+                  nodeItems:
+                    additionalProperties:
+                      description: NodeAttributes represents the node details
+                      properties:
+                        allocatable:
+                          additionalProperties:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          description: ResourceList is a set of (resource name, quantity) pairs.
+                          type: object
+                        annotations:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        capacity:
+                          additionalProperties:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          description: ResourceList is a set of (resource name, quantity) pairs.
+                          type: object
+                        labels:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        nodeId:
+                          description: UID is a type that holds unique ID values, including UUIDs.  Because we don't ONLY use UUIDs, this is an alias to string.  Being a type captures intent and helps make sure that UIDs and names do not get conflated.
+                          type: string
+                        nodeInfo:
+                          description: NodeInfo represents the node details
+                          properties:
+                            OSImage:
+                              type: string
+                            containerRunTime:
+                              type: string
+                            kernelVersion:
+                              type: string
+                            kubeProxyVersion:
+                              type: string
+                            kubeletVersion:
+                              type: string
+                            operatingSystem:
+                              type: string
+                          required:
+                          - OSImage
+                          - containerRunTime
+                          - kernelVersion
+                          - kubeProxyVersion
+                          - kubeletVersion
+                          - operatingSystem
+                          type: object
+                        nodeName:
+                          type: string
+                      required:
+                      - allocatable
+                      - capacity
+                      - nodeId
+                      - nodeInfo
+                      - nodeName
+                      type: object
+                    description: NodeItems represents node's attributes in the cluster
+                    type: object
+                  timeLastClusterInfoRequested:
+                    description: Epoch time of the last successful clusterInfo request
+                    type: string
+                  veleroVersion:
+                    description: Velero version available in the velero namespace
+                    type: string
+                type: object
+              errorDetails:
+                description: ErrorDetails related to this request.
+                nullable: true
+                properties:
+                  errorCode:
+                    description: ErrorCode represents the error code in case the request fails.
+                    type: integer
+                  errors:
+                    description: Errors has the error messages corresponding to the failure.
+                    type: string
+                type: object
+              kopsVersion:
+                description: KopsVersion specifies the version of the plugin
+                type: string
+              status:
+                description: Final status of the ClusterInfo Request.
+                enum:
+                - Success
+                - Failed
+                - PartiallyFailed
+                - InProgress
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: discoveries.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: Discovery
+    listKind: DiscoveryList
+    plural: discoveries
+    singular: discovery
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Discovery is the Schema for the discoveries API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DiscoverySpec defines the desired state of Discovery
+            properties:
+              backupServer:
+                description: BackupServer provides the details of the NetBackup primary server
+                properties:
+                  hostName:
+                    type: string
+                  uuid:
+                    type: string
+                required:
+                - hostName
+                - uuid
+                type: object
+              backupServerVersion:
+                description: Server version
+                nullable: true
+                type: string
+              clusterFqdn:
+                description: FQDN of the K8s Cluster
+                type: string
+              discoveryServer:
+                description: DiscoveryServer provides the details of the NetBackup server making the request.
+                properties:
+                  hostName:
+                    type: string
+                  uuid:
+                    type: string
+                required:
+                - hostName
+                - uuid
+                type: object
+              timeOfLastDiscovery:
+                description: Epoch time of the last successful discovery
+                type: string
+            required:
+            - backupServer
+            - clusterFqdn
+            - discoveryServer
+            - timeOfLastDiscovery
+            type: object
+          status:
+            description: DiscoveryStatus defines the observed state of Discovery
+            properties:
+              attributes:
+                description: Attributes associated with the Discovery Request.
+                properties:
+                  containerName:
+                    description: ContainerName corresponds to the name of the container running the KOps
+                    type: string
+                  discoveryFileName:
+                    description: Name of the discovery file
+                    type: string
+                  discoveryFilePath:
+                    description: Discovery file full path
+                    type: string
+                  discoveryTime:
+                    description: Discovery time
+                    type: string
+                  podName:
+                    description: PodName corresponds to the name of the pod running the KOps
+                    type: string
+                required:
+                - containerName
+                - discoveryFileName
+                - discoveryFilePath
+                - podName
+                type: object
+              errorDetails:
+                description: ErrorDetails related to this request.
+                nullable: true
+                properties:
+                  errorCode:
+                    description: ErrorCode represents the error code in case the request fails.
+                    type: integer
+                  errors:
+                    description: Errors has the error messages corresponding to the failure.
+                    type: string
+                type: object
+              status:
+                description: Final status of the Discovery Request.
+                enum:
+                - Success
+                - Failed
+                - InProgress
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: healthchecks.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: HealthCheck
+    listKind: HealthCheckList
+    plural: healthchecks
+    singular: healthcheck
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: HealthCheck is the Schema for the healthchecks API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: HealthCheckSpec defines the desired state of HealthCheck
+            properties:
+              backupServer:
+                description: BackupServer is the name of the requesting backup server
+                type: string
+            required:
+            - backupServer
+            type: object
+          status:
+            description: HealthCheckStatus defines the observed state of HealthCheck
+            properties:
+              pingTimestamp:
+                description: Timestamp is the date time response in RFC3339 format
+                type: string
+            required:
+            - pingTimestamp
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: imageexpirations.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: ImageExpiration
+    listKind: ImageExpirationList
+    plural: imageexpirations
+    singular: imageexpiration
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: ImageExpiration is the Schema for the imageexpirations API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ImageExpirationSpec defines the spec for expiring images
+            properties:
+              backupName:
+                type: string
+              backupServer:
+                type: string
+              cleanupAll:
+                type: boolean
+              resourceName:
+                type: string
+              resourceType:
+                type: string
+            required:
+            - backupName
+            - backupServer
+            - cleanupAll
+            - resourceName
+            - resourceType
+            type: object
+          status:
+            description: ImageExpirationStatus defines the observed state of ImageExpiration
+            properties:
+              endTime:
+                description: EndTime is the completion time for the image expiration operation
+                format: date-time
+                type: string
+              errorDetails:
+                description: ErrorDetails defines the error details for the image expiration operation
+                properties:
+                  additionalErrorInfo:
+                    items:
+                      properties:
+                        level:
+                          description: Level defines the error message severity
+                          enum:
+                          - Warning
+                          - Error
+                          type: string
+                        msg:
+                          type: string
+                      required:
+                      - level
+                      - msg
+                      type: object
+                    type: array
+                  errCode:
+                    description: ErrorCode represents the error codes associated with the response.
+                    type: integer
+                  errMessage:
+                    type: string
+                required:
+                - errCode
+                - errMessage
+                type: object
+              phase:
+                description: Phase of the NetBackup image expiration resource
+                type: string
+              startTime:
+                description: StartTime is the starting time for the image expiration operation
+                format: date-time
+                type: string
+            required:
+            - phase
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: nbconfigsettings.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: NbConfigSetting
+    listKind: NbConfigSettingList
+    plural: nbconfigsettings
+    singular: nbconfigsetting
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: NbConfigSetting is the Schema for the nbconfigsettings API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NbConfigSettingSpec defines the desired state of NbConfigSetting
+            properties:
+              configBinaryData:
+                additionalProperties:
+                  format: byte
+                  type: string
+                description: ConfigBinaryData contains byte sequences
+                type: object
+              configData:
+                additionalProperties:
+                  type: string
+                description: ConfigData contains key value pairs
+                type: object
+              name:
+                description: Name of the configmap
+                type: string
+              operation:
+                description: Operation is addUpdate/delete operation
+                type: string
+            required:
+            - name
+            - operation
+            type: object
+          status:
+            description: NbConfigSettingStatus defines the observed state of NbConfigSetting
+            properties:
+              errorDetails:
+                description: ErrorDetails related to this request.
+                nullable: true
+                properties:
+                  additionalErrorInfo:
+                    additionalProperties:
+                      type: string
+                    description: AdditionalErrorInfo has the additional error messages corresponding to the failure.
+                    type: object
+                  errorCode:
+                    description: ErrorCode represents the error code in case the request fails.
+                    type: integer
+                  errors:
+                    description: Errors has the error messages corresponding to the failure.
+                    type: string
+                type: object
+              status:
+                description: Final status of the Nbconnection Request.
+                enum:
+                - Success
+                - Failed
+                - InProgress
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: pvcbackups.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: PVCBackup
+    listKind: PVCBackupList
+    plural: pvcbackups
+    singular: pvcbackup
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: PVCBackup is the Schema for the pvcbackups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PVCBackupSpec defines the desired state of PVCBackup
+            properties:
+              backupServer:
+                description: BackupServer server name.
+                type: string
+              clusterName:
+                description: ClusterName is the kubernetes cluster hostname/ip-address
+                type: string
+              mediaServer:
+                description: MediaServer is the media server to be used for data mover communication. If not provided BackupServer will be used.
+                type: string
+              pvcBackupOptions:
+                description: PvcBackupOptions provides the details for the pvc to be backed up
+                properties:
+                  backupName:
+                    description: BackupName for which the metadata needs to be moved
+                    type: string
+                  isMetaDataBackup:
+                    description: IsMetaDataBackup is a flag indicating if metadata backup requested.
+                    type: boolean
+                  persistentVolumeClaimName:
+                    description: PersistentVolumeClaimName is the name of persistent volume clain
+                    nullable: true
+                    type: string
+                required:
+                - backupName
+                - isMetaDataBackup
+                type: object
+            required:
+            - backupServer
+            - clusterName
+            - pvcBackupOptions
+            type: object
+          status:
+            description: PVCBackupStatus defines the observed state of PVCBackup
+            properties:
+              dataMoverPvcDetails:
+                description: DataMoverPvcDetails provides details for data mover based operations
+                properties:
+                  configMapName:
+                    type: string
+                  mountPath:
+                    type: string
+                  podName:
+                    type: string
+                  pvcSizeInBytes:
+                    format: int64
+                    type: integer
+                required:
+                - configMapName
+                - mountPath
+                - podName
+                - pvcSizeInBytes
+                type: object
+              endTime:
+                description: EndTime is the completion time for the PVCBackup operation
+                format: date-time
+                type: string
+              errorDetails:
+                description: ErrorDetails related to this request.
+                nullable: true
+                properties:
+                  additionalErrorInfo:
+                    items:
+                      properties:
+                        level:
+                          description: Level defines the error message severity
+                          enum:
+                          - Warning
+                          - Error
+                          type: string
+                        msg:
+                          type: string
+                      required:
+                      - level
+                      - msg
+                      type: object
+                    type: array
+                  errCode:
+                    description: ErrorCode represents the error codes associated with the response.
+                    type: integer
+                  errMessage:
+                    type: string
+                required:
+                - errCode
+                - errMessage
+                type: object
+              phase:
+                description: Final status of the PVCBackup Request.
+                enum:
+                - InProgress
+                - Completed
+                - Failed
+                type: string
+              startTime:
+                description: StartTime is the starting time for the PVCBackup operation
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: restores.netbackup.veritas.com
+spec:
+  group: netbackup.veritas.com
+  names:
+    kind: Restore
+    listKind: RestoreList
+    plural: restores
+    singular: restore
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Restore is the Schema for the restores API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: RestoreSpec defines the desired state of Restore
+            properties:
+              clusterName:
+                description: ClusterName is the kubernetes cluster hostname/ip-address
+                type: string
+              flags:
+                description: Flags specifies the additional operation parameters
+                nullable: true
+                properties:
+                  collectLogs:
+                    description: CollectLogs is a flag to enable operation log generation for debugging purposes. Default is false
+                    type: boolean
+                  continueIfNamespaceExists:
+                    description: ContinueIfNamespaceExists is a flag to check if we need to continue with the restore operation if the namespace to be restored already exists. Default is false
+                    type: boolean
+                type: object
+              isMetaData:
+                description: IsMetaData specifies if the operation type is for metadata
+                type: boolean
+              isSnapshotOnly:
+                description: IsSnapshotOnly specifies if the RestoreOperationRestore is performed from the snapshot copy
+                type: boolean
+              mediaServer:
+                description: MediaServer is the media server to be used for data mover communication. If not provided BackupServer will be used.
+                type: string
+              restoreOperation:
+                description: RestoreOperation is the intended RestoreOperation to be performed
+                enum:
+                - Setup
+                - Move
+                - Restore
+                type: string
+              restoreOperationSpec:
+                description: RestoreOperationSpec contains the details for performing the RestoreOperation
+                properties:
+                  backupName:
+                    description: BackupName is the NetBackup backup image id.
+                    type: string
+                  excludedResources:
+                    description: ExcludedResources is a slice of resource names that are not included in the restore.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  includedResources:
+                    description: IncludedResources is a slice of resource names to include in the restore. If empty, all resources in the backup are included.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                  jobId:
+                    description: JobId is the NetBackup restore job id.
+                    type: integer
+                  originalNamespace:
+                    description: OriginalNamespace is the name of the namespace that was backed up
+                    type: string
+                  restoreName:
+                    description: RestoreName is a unique id for the duration of the restore. The id will be used for creating a directory in which all data related to the JobId will be stored.
+                    type: string
+                  targetNamespace:
+                    description: TargetNamespace is the name of the namespace were the resources are restored to.
+                    type: string
+                required:
+                - backupName
+                - originalNamespace
+                - restoreName
+                - targetNamespace
+                type: object
+              restorePvcSpec:
+                description: RestorePvcSpec is the spec of the pvc to be restored. For RestoreOperation type RestoreOperationSetup and RestoreOperationMove this is required.
+                nullable: true
+                properties:
+                  name:
+                    description: Name of the PVC to be restored
+                    type: string
+                  pvRestoreOnly:
+                    description: PvRestoreOnly is a boolean flag to decide if the PVC should be restored along with the PV. Default is false.
+                    type: boolean
+                  targetStorageClass:
+                    description: TargetStorageClass is the storage class that should be used for generating the PV. if not provided the default storage class will be used.
+                    type: string
+                required:
+                - name
+                type: object
+              serverName:
+                description: ServerName is the NetBackup primary server name
+                type: string
+            required:
+            - clusterName
+            - isMetaData
+            - isSnapshotOnly
+            - restoreOperation
+            - restoreOperationSpec
+            - serverName
+            type: object
+          status:
+            description: RestoreStatus defines the observed state of Restore
+            properties:
+              dataMoverPvcDetails:
+                description: DataMoverPvcDetails provides details for data mover based operations
+                properties:
+                  configMapName:
+                    type: string
+                  mountPath:
+                    type: string
+                  podName:
+                    type: string
+                  pvcSizeInBytes:
+                    format: int64
+                    type: integer
+                required:
+                - configMapName
+                - mountPath
+                - podName
+                - pvcSizeInBytes
+                type: object
+              endTime:
+                description: EndTime is the completion time for the restore operation
+                format: date-time
+                type: string
+              errorDetails:
+                description: ErrorDetails defines the error details for the restore operation
+                properties:
+                  additionalErrorInfo:
+                    items:
+                      properties:
+                        level:
+                          description: Level defines the error message severity
+                          enum:
+                          - Warning
+                          - Error
+                          type: string
+                        msg:
+                          type: string
+                      required:
+                      - level
+                      - msg
+                      type: object
+                    type: array
+                  errCode:
+                    description: ErrorCode represents the error codes associated with the response.
+                    type: integer
+                  errMessage:
+                    type: string
+                required:
+                - errCode
+                - errMessage
+                type: object
+              operationLogPath:
+                description: OperationLogPath specifies the path on the container where the operation logs are persisted. It will be collected if the Flag.CollectLogs is enabled.
+                type: string
+              phase:
+                description: Phase is the current status of the restore operation
+                enum:
+                - Queued
+                - InProgress
+                - Completed
+                - Failed
+                - PartiallyFailed
+                type: string
+              startTime:
+                description: StartTime is the starting time for the restore operation
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-backup-server
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-operator
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-backup-server-role
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - backups
+  - cleanupnburesources
+  - clusterinfoes
+  - discoveries
+  - healthchecks
+  - nbconfigsettings
+  - pvcbackups
+  - restores
+  - backupservercerts
+  - imageexpirations
+  verbs:
+  - get
+  - create
+  - update
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-leader-election-role
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-manager-role
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - backups
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - backups/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - backupservercerts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - backupservercerts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - cleanupnburesources
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - cleanupnburesources/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - clusterinfoes
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - clusterinfoes/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - discoveries
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - discoveries/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - healthchecks
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - healthchecks/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - imageexpirations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - imageexpirations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - nbconfigsettings
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - nbconfigsettings/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - pvcbackups
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - pvcbackups/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - restores
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - netbackup.veritas.com
+  resources:
+  - restores/status
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - snapshot.storage.k8s.io
+  resources:
+  - volumesnapshots
+  verbs:
+  - create
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-leader-election-rolebinding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Namespace }}-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Namespace }}-operator
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-netbackup-role-binding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Namespace }}-backup-server-role
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Namespace }}-backup-server
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Namespace }}-operator
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Namespace }}-operator
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+data:
+  checkNbcertdaemonStatusDurationMinutes: "1440"
+  cleanStaleCRDurationMinutes: "1440"
+  cleanStaleCertFilesDurationMinutes: "1440"
+  collectDataMoverLogs: "false"
+  livenessProbePeriodSeconds: "180"
+  livesnessProbeInitialDelay: "60"
+  maxRetentionDataMoverInHours: "24"
+  maxRetentionDataMoverLogsInHours: "72"
+  maxRetentionInDiscoveryCacheHours: "48"
+  namespace: {{ .Release.Namespace }}
+  nbcertPrerequisteDirectoryAndFiles: |
+    vxssDirPath=/usr/openv/var/vxss
+    bp.conf=/usr/openv/netbackup/bp.conf
+    atLibPath=/nbcertcmdtool
+    fingerprintDirPath=/usr/openv/fingerprint-dir
+  pollingFrequencyInSecs: "5"
+  pollingTimeoutInMinutes: "15"
+  resources: |
+    ConfigMaps=true
+    DaemonSets=true
+    Deployments=true
+    Pods=true
+    ReplicaSets=true
+    Secrets=true
+    Services=true
+  ttlCRDurationMinutes: "30240"
+kind: ConfigMap
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-backup-operator-configuration
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+data:
+  nbcert.sh: |-
+    #!/bin/sh
+    mkdir -p /usr/openv/kops
+    mkdir -p /usr/openv/fingerprint-dir
+    mkdir -p /usr/openv/tmp
+    mkdir -p /usr/openv/netbackup/logs/nbcert
+    mkdir -p /usr/openv/netbackup/logs/nbcert/nobody
+    mkdir -p /usr/openv/var/global
+    mkdir -p /usr/openv/var/vxss
+    touch /usr/openv/var/global/nbcl.conf
+    touch /usr/openv/netbackup/bp.conf
+    chown -R 99:99 /usr/openv
+    echo "CLIENT_KEEP_LOG_DAYS = 90" >> /usr/openv/netbackup/bp.conf
+    echo "SERVICE_USER=nobody" >> /usr/openv/netbackup/bp.conf
+    echo "MACHINE_NBU_TYPE = KUBERNETES_CLUSTER" >> /usr/openv/netbackup/bp.conf
+kind: ConfigMap
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-certconfigscript
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    component: netbackup
+    control-plane: controller-manager
+  name: {{ .Release.Namespace }}-controller-manager-metrics-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - name: https
+    port: 8443
+    targetPort: https
+  selector:
+    component: netbackup
+    control-plane: controller-manager
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    component: netbackup
+  name: {{ .Release.Namespace }}-netbackupkops
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    component: netbackup
+    control-plane: controller-manager
+  name: {{ .Release.Namespace }}-controller-manager
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: netbackup
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        component: netbackup
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: {{ .Values.netbackupkops.containers.manager_proxy.image }}
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --metrics-addr=127.0.0.1:8080
+        command:
+        - /netbackupkops
+        env:
+        - name: PV_MOUNT_POINT
+          value: /usr/openv
+        image: {{ .Values.netbackupkops.containers.manager.image }}
+        imagePullPolicy: IfNotPresent
+        name: netbackupkops
+        resources:
+          limits:
+            cpu: {{ .Values.netbackupkops.containers.manager.resources.limits.cpu }}
+            memory: {{ .Values.netbackupkops.containers.manager.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.netbackupkops.containers.manager.resources.requests.cpu }}
+            memory: {{ .Values.netbackupkops.containers.manager.resources.requests.memory }}
+        volumeMounts:
+        - mountPath: /usr/openv
+          name: nbukops-volume
+      imagePullSecrets:
+      - name: {{ .Values.netbackupkops.imagePullSecrets.name }}
+      initContainers:
+      - command:
+        - /scripts/nbcert.sh
+        image: quay.testvn.click/veritas-technologies/alpine:3
+        name: data-dir-ownership
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /usr/openv
+          name: nbukops-volume
+        - mountPath: /scripts
+          name: certconfigscript
+      serviceAccountName: {{ .Release.Namespace }}-operator
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: nbukops-volume
+        persistentVolumeClaim:
+          claimName: {{ .Release.Namespace }}-netbackupkops
+      - configMap:
+          defaultMode: 484
+          name: {{ .Release.Namespace }}-certconfigscript
+        name: certconfigscript
