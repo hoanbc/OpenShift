@@ -1,0 +1,24 @@
+---
+[root@lab-quay ~]# oc get node
+NAME                     STATUS   ROLES                  AGE   VERSION
+ocp-f944j-infra-6m7qn    Ready    infra,worker           36d   v1.25.7+eab9cc9
+ocp-f944j-infra-9psfv    Ready    infra,worker           36d   v1.25.7+eab9cc9
+
+---
+oc label nodes ocp-f944j-infra-6m7qn k8s.ovn.org/egress-assignable="" 
+oc label nodes ocp-f944j-infra-9psfv k8s.ovn.org/egress-assignable="" 
+---
+apiVersion: k8s.ovn.org/v1
+kind: EgressIP
+metadata:
+  name: egress-prod
+spec:
+  egressIPs:
+    - 10.200.12.233
+  namespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: In
+        values:
+          - egress-test
+          - testvn-jenkins
