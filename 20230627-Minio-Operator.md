@@ -68,43 +68,25 @@ roleRef:
 #### Create SCC
  oc get namespace testvn-minio -o=jsonpath='{.metadata.annotations.openshift\.io/sa\.scc\.supplemental-groups}{"\n"}'
 ```yaml
-allowHostPorts: true
-priority: null
-requiredDropCapabilities: []
-allowPrivilegedContainer: true
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: scc-minio
 runAsUser:
   type: MustRunAs
   uid: 1001050000
-users:
-  - 'system:serviceaccount:testvn-minio:testvn-sa'
-  - 'system:serviceaccount:testvn-minio:default'
-allowHostDirVolumePlugin: true
-allowHostIPC: true
 seLinuxContext:
   type: MustRunAs
-readOnlyRootFilesystem: false
-metadata:
-  name: scc-minio
-fsGroup:
-  type: MustRunAs
-groups: []
-kind: SecurityContextConstraints
-defaultAddCapabilities: []
-supplementalGroups:
-  type: RunAsAny
+  uid: 1001050000
 volumes:
-  - configMap
-  - downwardAPI
-  - emptyDir
-  - hostPath
   - persistentVolumeClaim
-  - projected
   - secret
-allowHostPID: true
-allowHostNetwork: true
-allowPrivilegeEscalation: true
-apiVersion: security.openshift.io/v1
-allowedCapabilities: []
+  - emptyDir
+  - projected
+users:
+  - 'system:serviceaccount:testvn-minio:minio-sa'
+  - 'system:serviceaccount:testvn-minio:default'
 ```
 #### Login URL https://minio-operator.testvn.click/ with Token
 ```yaml
