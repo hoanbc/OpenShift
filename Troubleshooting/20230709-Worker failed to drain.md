@@ -1,4 +1,5 @@
 #### Check
+```yaml
 C:\Users\hoanb>oc get -o yaml clusteroperator machine-config
 status:
   conditions:
@@ -31,6 +32,8 @@ worker   rendered-worker-f7ab4dce950f7f84abfa880eff1da0aa   False     True      
 
 [root@lab-quay vault-helm]# oc logs -f -n openshift-machine-config-operator machine-config-controller-55b7b6c4bc-p95gt -c machine-config-controller
 E0709 08:31:53.282530       1 drain_controller.go:110] error when evicting pods/"vault-0" -n "testvn-vault" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
-
+```
 #### Solution
+```yaml
 oc delete pods/vault-0 -n testvn-vault
+```
